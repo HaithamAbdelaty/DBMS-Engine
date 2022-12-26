@@ -121,25 +121,26 @@ function DropTable(){
 
         if [ -f $targeted_table ]; 
         then
-                echo "you're in the second part now "
+              
                         #this way you will count the number of fields from the first line where they are separated  with full colon 
-                        #save the variable where you can use it later 
-                         Field_num= awk -F ":" '{if(NR==1) print NF}' $targeted_table
+                        
+                         Field_num=`awk -F ":" '{if(NR==1) print NF}' $targeted_table`
                       #  echo "$Field_num"
-                        counter=2
-                        while ! [[ $counter == $Field_num ]]
+                        counter=1
+                        record=""
+                        while [[ $counter -le $Field_num ]]
                         do  
                         #iterate through every column to get these values 
-                                FieldName=awk -F ":" '{ if(NR=='$i') print $1}' meta_$table_name
-                                FieldType=awk -F ":" '{ if(NR=='$i') print $2}' meta_$table_name
-                                FieldPrimaryKey=awk -F ":"'{ if(NR=='$i') print $3}' meta_$table_name
+                                FieldName=$(awk 'BEGIN{FS =":"} { if(NR=='$counter') print $1}' meta_$targeted_table)
+                                FieldType=$(awk 'BEGIN{FS =":"} { if(NR=='$counter') print $2}' meta_$targeted_table)
+                                FieldPrimaryKey=$(awk 'BEGIN{FS=":"}{ if(NR=='$counter') print $3}' meta_$targeted_table)
 
                                 read -p "Enter field ( $FieldName ): " input
                                 #check the previous three extracted info 
 
-                                if [[ "$FieldType" == "int" ]]; then  
+                                if [[ $FieldType == "int" ]]; then  
                                                         # if the data type of the field is int make sure to validate the input as an integer with the matching regex
-                                                        while ! [[ "$input" =~ ^[1-9]*[1-9]+$|^[1-9]+[0-9]*$ ]]
+                                                        while ! [[ $input =~ ^[1-9]*[1-9]+$|^[1-9]+[0-9]*$ ]]
                                                         do
                                                                 echo -e "error! invalid Data type , please enter it correctly"
                                                                 read input
@@ -148,11 +149,11 @@ function DropTable(){
 
                                 # validate the input in case if it was a string 
 
-                                elif [ "$FieldType" = "str" ]
+                                elif [[ $FieldType == "str" ]];
                                                         then
 
                                                                 
-                                                        while ! [[ "$input" =~ ^[a-zA-Z]  ]]
+                                                        while ! [[ $input =~ ^[a-zA-Z] ]]
                                                         do
 
                                                                 echo -e "error! Invalid input , please try again "
@@ -161,21 +162,23 @@ function DropTable(){
                                 fi 
 
                                 #check the validation of the primary key 
-                                if [[ $FieldPrimaryKey == "PK" && $input != "PK" ]]; then 
-                                echo "this must be a primary key "
-                                Input ="PK"
-                                fi 
+                                #if [[ $FieldPrimaryKey == "PK" ]]; then 
+                                #echo "this must be a primary key "
+                                #input ="PK"
+                                #fi 
                 #if the last round consider starting  a new line , otherwise assign a separator so you can add more values to the record and then append it normally
                                 if [[ $counter == $Field_num ]]; then 
-                                record=$record$input$
+                                record=$record$input
                                 else 
                                 record=$record$input$separator
                                 fi 
-                                echo -e input  >> $targeted_table
+                               
 
                         counter=$((counter+1)) 
                         done 
-        else
+                         echo -e $record  >> $targeted_table
+                         
+         else
          echo " Error, $targeted_table doesn't exist !  "
         fi    
 
